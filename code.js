@@ -233,11 +233,10 @@ function buildCloneMap(masterFrame, cloneFrame) {
   return map;
 }
 
-async function run() {
+async function runGeneration(selectedFormats) {
   const selection = figma.currentPage.selection;
   if (selection.length !== 1 || selection[0].type !== 'FRAME') {
     figma.notify('Sélectionne une frame master unique avant de lancer la génération.');
-    figma.closePlugin();
     return;
   }
 
@@ -246,7 +245,7 @@ async function run() {
   const baseMappings = detectRoles(masterFrame);
   const warnings = [];
 
-  for (const formatName of defaultDesignSystem.formatOrder) {
+  for (const formatName of selectedFormats) {
     const format = defaultDesignSystem.formats[formatName];
     if (!format) continue;
 
@@ -283,12 +282,41 @@ async function run() {
   } else {
     figma.notify('Génération terminée ✅');
   }
-
-  figma.closePlugin();
 }
 
-run().catch((e) => {
-  console.error(e);
-  figma.notify('Erreur plugin: voir console');
-  figma.closePlugin();
+figma.showUI(__html__, { width: 420, height: 620, themeColors: true });
+
+figma.ui.postMessage({
+  type: 'init',
+  formats: defaultDesignSystem.formatOrder.map((key) => ({
+    key,
+    width: defaultDesignSystem.formats[key].width,
+    height: defaultDesignSystem.formats[key].height
+  }))
 });
+
+figma.ui.onmessage = async (msg) => {
+  if (!msg || typeof msg !== 'object') return;
+
+  if (msg.type === 'cancel') {
+    figma.closePlugin('Annulé');
+    return;
+  }
+
+  if (msg.type === 'generate') {
+    const selectedFormats = Array.isArray(msg.formats) ? msg.formats : [];
+    if (!selectedFormats.length) {
+      figma.notify('Choisis au moins un format à générer.');
+      return;
+    }
+
+    try {
+      await runGeneration(selectedFormats);
+      figma.closePlugin('Génération terminée');
+    } catch (e) {
+      console.error(e);
+      figma.notify('Erreur plugin: voir console');
+      figma.closePlugin('Erreur');
+    }
+  }
+};

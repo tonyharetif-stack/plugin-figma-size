@@ -85,5 +85,6 @@ Le manifeste pointe directement vers `code.js`, donc **aucun build n'est requis*
 1. Ouvrir Figma > Plugins > Development > Import plugin from manifest
 2. Sélectionner `manifest.json`
 3. Lancer le plugin sur une frame master sélectionnée
+4. Dans l'UI, sélectionner les formats à générer puis cliquer sur **Générer**
 
 > Les sources TypeScript dans `src/` restent disponibles pour une évolution vers un pipeline build/bundle.
