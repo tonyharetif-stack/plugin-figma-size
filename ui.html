@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Multi-Format Generator</title>
+    <style>
+      :root {
+        --bg: #1f1f1f;
+        --panel: #2a2a2a;
+        --card: #f3f3f3;
+        --text: #111;
+        --muted: #7a7a7a;
+        --accent: #e5271d;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, Arial, sans-serif;
+        background: var(--bg);
+        color: #fff;
+      }
+      .container { padding: 16px; }
+      h1 { margin: 0 0 6px; font-size: 16px; }
+      p { margin: 0 0 14px; color: #c8c8c8; font-size: 12px; }
+      .toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+      button {
+        border: 0; border-radius: 8px; padding: 8px 10px; font-size: 12px;
+        cursor: pointer;
+      }
+      .ghost { background: #3a3a3a; color: #fff; }
+      .primary { background: var(--accent); color: #fff; font-weight: 600; }
+      .list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        max-height: 430px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+      .item {
+        background: var(--card);
+        border-radius: 10px;
+        border: 2px solid transparent;
+        display: grid;
+        grid-template-columns: 22px 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        color: var(--text);
+      }
+      .item.checked { border-color: var(--accent); }
+      .name { font-size: 13px; font-weight: 600; text-transform: capitalize; }
+      .meta { font-size: 11px; color: var(--muted); }
+      .preview {
+        width: 56px; height: 34px; border-radius: 4px; background: #d9d9d9; position: relative;
+      }
+      .preview::before {
+        content: '';
+        position: absolute;
+        left: 6px; top: 6px;
+        width: 22px; height: 6px;
+        background: var(--accent);
+        opacity: 0.9;
+      }
+      .actions { display: flex; gap: 8px; margin-top: 12px; }
+      .actions button { flex: 1; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Génération multi-formats</h1>
+      <p>Choisis les formats à générer avant lancement (frame master sélectionnée).</p>
+
+      <div class="toolbar">
+        <button class="ghost" id="selectAll">Tout sélectionner</button>
+        <button class="ghost" id="clearAll">Tout vider</button>
+      </div>
+
+      <div class="list" id="formats"></div>
+
+      <div class="actions">
+        <button class="ghost" id="cancel">Annuler</button>
+        <button class="primary" id="generate">Générer</button>
+      </div>
+    </div>
+
+    <script>
+      const state = { formats: [] };
+
+      const elFormats = document.getElementById('formats');
+
+      function prettify(key) {
+        return key.replaceAll('_', ' ');
+      }
+
+      function render() {
+        elFormats.innerHTML = '';
+        state.formats.forEach((f, idx) => {
+          const row = document.createElement('label');
+          row.className = 'item' + (f.checked ? ' checked' : '');
+          row.innerHTML = `
+            <input type="checkbox" ${f.checked ? 'checked' : ''} data-idx="${idx}" />
+            <div>
+              <div class="name">${prettify(f.key)}</div>
+              <div class="meta">${f.width} × ${f.height}</div>
+            </div>
+            <div class="preview"></div>
+          `;
+          elFormats.appendChild(row);
+        });
+
+        elFormats.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+          cb.addEventListener('change', (e) => {
+            const idx = Number(e.target.dataset.idx);
+            state.formats[idx].checked = e.target.checked;
+            render();
+          });
+        });
+      }
+
+      onmessage = (event) => {
+        const msg = event.data.pluginMessage;
+        if (!msg || msg.type !== 'init') return;
+        state.formats = msg.formats.map((f) => ({ ...f, checked: true }));
+        render();
+      };
+
+      document.getElementById('selectAll').onclick = () => {
+        state.formats.forEach((f) => (f.checked = true));
+        render();
+      };
+
+      document.getElementById('clearAll').onclick = () => {
+        state.formats.forEach((f) => (f.checked = false));
+        render();
+      };
+
+      document.getElementById('cancel').onclick = () => {
+        parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+      };
+
+      document.getElementById('generate').onclick = () => {
+        const selected = state.formats.filter((f) => f.checked).map((f) => f.key);
+        parent.postMessage({ pluginMessage: { type: 'generate', formats: selected } }, '*');
+      };
+    </script>
+  </body>
+</html>
