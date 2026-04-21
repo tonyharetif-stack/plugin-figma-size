@@ -2,6 +2,6 @@
   "name": "Multi-Format KV Generator",
   "id": "multi-format-kv-generator",
   "api": "1.0.0",
-  "main": "dist/main.js",
+  "main": "code.js",
   "editorType": ["figma"]
 }

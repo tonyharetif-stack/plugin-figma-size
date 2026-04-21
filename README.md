@@ -78,11 +78,12 @@ Ordre d'application conseillé:
 
 Les rôles stratégiques (`headline`, `hero_image`, `promo_badge`, `cta`) ne doivent jamais être supprimés.
 
-## Build
+## Exécution dans Figma
 
-```bash
-npm install
-npm run build
-```
+Le manifeste pointe directement vers `code.js`, donc **aucun build n'est requis** pour lancer le plugin en développement.
 
-Puis chargez `manifest.json` dans Figma (Development plugin).
+1. Ouvrir Figma > Plugins > Development > Import plugin from manifest
+2. Sélectionner `manifest.json`
+3. Lancer le plugin sur une frame master sélectionnée
+
+> Les sources TypeScript dans `src/` restent disponibles pour une évolution vers un pipeline build/bundle.
